@@ -23,8 +23,9 @@ to quickly create a Cobra application.`,
 }
 
 func checkImpl(cmd *cobra.Command, args []string) {
+	src := rootCmd.PersistentFlags().Lookup("src")
 	// Read files from src/ and orig/
-	readRecursiveDir(".", 0)
+	readRecursiveDir(src.Value.String(), 0)
 }
 
 func readRecursiveDir(name string, level int) {
