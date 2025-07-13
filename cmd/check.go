@@ -2,9 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"strings"
+	"github.com/jerebenitez/sched-cli/lib"
 
 	"github.com/spf13/cobra"
 )
@@ -24,37 +22,25 @@ to quickly create a Cobra application.`,
 
 func checkImpl(cmd *cobra.Command, args []string) {
 	src := rootCmd.PersistentFlags().Lookup("src")
-	// Read files from src/ and orig/
-	readRecursiveDir(src.Value.String(), 0)
-}
+	origFiles := lib.ReadRecursiveDir(src.Value.String(), "orig")
+	patchesFiles := lib.ReadRecursiveDir(src.Value.String(), "patches")
 
-func readRecursiveDir(name string, level int) {
-	files, err := os.ReadDir(name)
+	// Compare that there are patches for every file in orig/
+	fmt.Print("Checking patches and original files... ")
+	missing := lib.CheckPatches(origFiles, patchesFiles)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, file := range files {
-		// Ignore hidden files, UNIX-only
-		if strings.HasPrefix(file.Name(), ".") {
-			continue
-		}
-
-		fileName := name + "/" + file.Name()
-		fmt.Println(strings.Repeat(" ", level * 2) + file.Name())
-		fi, err := os.Lstat(fileName)
-
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		switch mode := fi.Mode(); {
-		case mode.IsDir(): 
-			readRecursiveDir(fileName, level + 1)
+	if (len(missing) == 0) {
+		fmt.Println("OK.")
+	} else {
+		fmt.Println()
+		for _, p := range missing {
+			fmt.Printf("ERROR: %s missing its %s file.\n", p.File, p.Missing)
 		}
 	}
 
+	// Check that files from orig/ exists in kernel source
+
+	// Check that patches can be applied cleanly
 }
 
 func init() {
