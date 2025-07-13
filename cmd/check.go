@@ -36,6 +36,11 @@ func readRecursiveDir(name string, level int) {
 	}
 
 	for _, file := range files {
+		// Ignore hidden files, UNIX-only
+		if strings.HasPrefix(file.Name(), ".") {
+			continue
+		}
+
 		fileName := name + "/" + file.Name()
 		fmt.Println(strings.Repeat(" ", level * 2) + file.Name())
 		fi, err := os.Lstat(fileName)
