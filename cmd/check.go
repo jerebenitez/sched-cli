@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/jerebenitez/sched-cli/lib"
@@ -33,8 +34,8 @@ func checkImpl(cmd *cobra.Command, args []string) {
 	origFiles := lib.ReadRecursiveDir(dir, "orig")
 
 	for _, file := range origFiles {
-		srcFile := 	src + "/" + file
-		origFile := dir + "/orig/" + file
+		srcFile := filepath.Join(src, file)
+		origFile := filepath.Join(dir, "orig", file)
 
 		if exists, err := lib.FileExists(srcFile); exists {
 			fmt.Printf("\tChecking %s...", file)
@@ -64,11 +65,11 @@ func checkImpl(cmd *cobra.Command, args []string) {
 	patches := lib.ReadRecursiveDir(dir, "patches")
 
 	for _, patch := range patches {
-		srcFile := src + "/" + lib.TrimExtension(patch)
-		patchFile := dir + "/patches/" + patch
+		srcFile := filepath.Join(src, lib.TrimExtension(patch))
+		patchFile := filepath.Join(dir, "patches", patch)
 
 		if exists, err := lib.FileExists(srcFile); exists {
-			if canApply, err := lib.CanApplyPatch(srcFile, patchFile); canApply {
+			if canApply, err := lib.ApplyPatch(srcFile, patchFile, true); canApply {
 				fmt.Printf("\tPatch %s can be applied.\n", patch)
 			} else if err == nil {
 				fmt.Printf("\tERROR: Patch %s CAN'T be applied.\n", patch)
