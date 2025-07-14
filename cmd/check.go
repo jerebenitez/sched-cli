@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/jerebenitez/sched-cli/lib"
@@ -35,16 +36,22 @@ func checkImpl(cmd *cobra.Command, args []string) {
 		srcFile := 	src + "/" + file
 		origFile := dir + "/orig/" + file
 
-		if lib.FileExists(srcFile) {
-			fmt.Printf("Checking %s...", file)
-			if lib.FilesAreDifferent(origFile, srcFile) {
+		if exists, err := lib.FileExists(srcFile); exists {
+			fmt.Printf("\tChecking %s...", file)
+			if diff, err := lib.FilesAreDifferent(origFile, srcFile); diff {
 				fmt.Printf(" [CHANGED]\n")
 			} else {
-				fmt.Printf(" [NOT CHANGED]\n")
+				if err != nil {
+					fmt.Printf(" [NOT CHANGED]\n")
+				} else {
+					log.Fatal(err)
+				}
 			}
-		} else {
-			fmt.Printf("ERROR: %s missing in source tree.\n", file)
+		} else if err == nil {
+			fmt.Printf("\tERROR: %s does not exists.\n", file)
 			error = true
+		} else {
+			log.Fatal(err)
 		}
 	}
 
@@ -60,14 +67,18 @@ func checkImpl(cmd *cobra.Command, args []string) {
 		srcFile := src + "/" + lib.TrimExtension(patch)
 		patchFile := dir + "/patches/" + patch
 
-		if lib.FileExists(srcFile) {
-			if lib.CanApplyPatch(srcFile, patchFile) {
-				fmt.Printf("Patch %s can be applied.\n", patch)
+		if exists, err := lib.FileExists(srcFile); exists {
+			if canApply, err := lib.CanApplyPatch(srcFile, patchFile); canApply {
+				fmt.Printf("\tPatch %s can be applied.\n", patch)
+			} else if err == nil {
+				fmt.Printf("\tERROR: Patch %s CAN'T be applied.\n", patch)
 			} else {
-				fmt.Printf("ERROR: Patch %s CAN'T be applied.\n", patch)
+				log.Fatal(err)
 			}
+		} else if err == nil {
+			fmt.Printf("\tERROR: %s not applicable to source tree.\n", patch)
 		} else {
-			fmt.Printf("ERROR: %s not applicable to source tree.\n", patch)
+			log.Fatal(err)
 		}
 	}
 }

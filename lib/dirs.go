@@ -1,7 +1,9 @@
 package lib
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -27,43 +29,52 @@ func ReadRecursiveDir(parentFolder, folder string) (files []string) {
 	return files
 }
 
-func FileExists(path string) bool{
-	if _, err := os.Stat(path); err == nil {
-		return true
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false
-	} else {
-		log.Fatal(err)
-		return false
-	}	
-}
-
-func FilesAreDifferent(pathA, pathB string) bool {
-	if !FileExists(pathA) || !FileExists(pathB) {
-		return false
+func FileExists(path string) (bool, error){
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
 	}
 
-	// TODO: Migrate this entirely to go
-	diff := exec.Command("diff", "-q", pathA, pathB)
-
-	if err := diff.Run(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if exitError.ExitCode() == 1 {
-				return true
-			}
-			log.Fatal(err)
-			return false
-		} else {
-			return false
-		}
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
 	}
 
-	return false
+	return false, err
 }
 
-func CanApplyPatch(sourcePath, patchPath string) bool {
-	if !FileExists(sourcePath) || !FileExists(patchPath) {
-		return false
+func FilesAreDifferent(pathA, pathB string) (bool, error) {
+	if aExists, err := FileExists(pathA); err != nil || !aExists {
+		return false, fmt.Errorf("file A missing or error: %w", err)
+	}
+
+	if bExists, err := FileExists(pathB); err != nil || !bExists {
+		return false, fmt.Errorf("file B missing or error: %w", err)
+	}
+
+	aData, err := os.ReadFile(pathA)
+	if err != nil {
+		return false, err
+	}
+
+	bData, err := os.ReadFile(pathB)
+	if err != nil {
+		return false, err
+	}
+
+	if !bytes.Equal(aData, bData) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func CanApplyPatch(sourcePath, patchPath string) (bool, error) {
+	if aExists, err := FileExists(sourcePath); err != nil || !aExists {
+		return false, fmt.Errorf("source file missing or error: %w", err)
+	}
+
+	if bExists, err := FileExists(patchPath); err != nil || !bExists {
+		return false, fmt.Errorf("patch missing or error: %w", err)
 	}
 
 	devnull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
@@ -81,12 +92,13 @@ func CanApplyPatch(sourcePath, patchPath string) bool {
 	diff.Stdout = devnull
 
 	if err := diff.Run(); err != nil {
-		// Consider any error as a condition for not applicability
-		// TODO: maybe improve this
-		return false
+		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
+			return false, nil
+		}
+		return false, err
 	}
 
-	return true
+	return true, nil
 
 }
 

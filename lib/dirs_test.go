@@ -10,7 +10,7 @@ type inputs struct {
 	b []string
 }
 
-var flagtests = []struct {
+var comparetests = []struct {
 	name string
     in inputs
     out []string
@@ -31,7 +31,7 @@ var flagtests = []struct {
 }
 
 func TestCompareDirs(t *testing.T) {
-	for _, tt := range flagtests {
+	for _, tt := range comparetests {
         t.Run(tt.name, func(t *testing.T) {
             s := CompareDirs(tt.in.a, tt.in.b)
             if !slices.Equal(s, tt.out) {
