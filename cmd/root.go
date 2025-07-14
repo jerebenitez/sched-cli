@@ -25,7 +25,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("src", "s", ".", "Path to shceduler source code.")
+	rootCmd.PersistentFlags().StringP("src", "s", ".", "Path to kernel source code.")
+	rootCmd.PersistentFlags().StringP("dir", "d", ".", "Path to shceduler source code.")
 }
 
 
