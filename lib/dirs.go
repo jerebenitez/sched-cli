@@ -90,12 +90,10 @@ func CanApplyPatch(sourcePath, patchPath string) bool {
 
 }
 
-func TrimExtension(dir string) (trimmed string) {
-	idx := strings.LastIndex(dir, ".")
-	if idx > 0 {
-		trimmed = dir[0:idx]
-	} else {
-		trimmed = dir
+func TrimExtension(path string) string {
+	if idx := strings.LastIndex(path, "."); idx > 0 {
+		return path[0:idx]
 	}
-	return 
+
+	return path
 }
