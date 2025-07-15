@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -48,9 +49,6 @@ func FilesAreDifferent(pathA, pathB string) (bool, error) {
 }
 
 func TrimExtension(path string) string {
-	if idx := strings.LastIndex(path, "."); idx > 0 {
-		return path[0:idx]
-	}
-
-	return path
+	ext := filepath.Ext(path)
+	return strings.TrimSuffix(path, ext)
 }
