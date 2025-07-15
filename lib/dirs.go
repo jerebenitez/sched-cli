@@ -1,17 +1,11 @@
 package lib
 
-import (
-	"io/fs"
-	"log"
-	"os"
-)
+import "io/fs"
 
-func ReadRecursiveDir(parentFolder, folder string) (files []string) {
-	fileSystem := os.DirFS(parentFolder + "/" + folder)
-
-	fs.WalkDir(fileSystem, ".", func(path string, d fs.DirEntry, err error) error {
+func ReadRecursiveDir(fsys fs.FS) (files []string, err error) {
+	err = fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 
 		if d.Type().IsRegular() {
@@ -21,6 +15,6 @@ func ReadRecursiveDir(parentFolder, folder string) (files []string) {
 		return nil
 	})
 
-	return files
+	return
 }
 
