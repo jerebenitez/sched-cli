@@ -54,11 +54,3 @@ func TrimExtension(path string) string {
 
 	return path
 }
-
-func GetPath(filePath string) string {
-	if idx := strings.LastIndex(filePath, "/"); idx > 0 {
-		return filePath[0:idx]
-	}
-
-	return filePath
-}

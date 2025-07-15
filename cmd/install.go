@@ -40,7 +40,7 @@ func runInstall(cmd *cobra.Command, args []string) {
 	}
 
 	for _, file := range files {
-		path := lib.GetPath(file)
+		path, _ := filepath.Split(file)
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			log.Fatalf("Error creating folder %s!. Quitting.\n", path)
 			return
