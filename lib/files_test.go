@@ -24,7 +24,7 @@ func TestFileExists(t *testing.T) {
 	}
 }
 
-func TestFileDoesNotExist(t *testing.T) {
+func TestFileExists_NonExistingFile(t *testing.T) {
 	tmp := t.TempDir()
 
 	nonExistent := filepath.Join(tmp, "missing.txt")
@@ -37,7 +37,7 @@ func TestFileDoesNotExist(t *testing.T) {
 	}
 }
 
-func TestInvalidPath(t *testing.T) {
+func TestFileExists_InvalidPath(t *testing.T) {
 	invalidPath := string([]byte{0x00}) // null byte is illegal in paths
 	exists, err := FileExists(invalidPath)
 	if err == nil {
@@ -48,7 +48,7 @@ func TestInvalidPath(t *testing.T) {
 	}
 }
 
-func TestFilesAreDifferentIdenticalFiles(t *testing.T) {
+func TestFilesAreDifferent_IdenticalFiles(t *testing.T) {
 	tmp := t.TempDir()
 
 	fileA := filepath.Join(tmp, "a.txt")
@@ -71,7 +71,7 @@ func TestFilesAreDifferentIdenticalFiles(t *testing.T) {
 	}
 }
 
-func TestFilesAreDifferentDifferentFiles(t *testing.T) {
+func TestFilesAreDifferent_DifferentFiles(t *testing.T) {
 	tmp := t.TempDir()
 
 	fileA := filepath.Join(tmp, "a.txt")
@@ -93,7 +93,7 @@ func TestFilesAreDifferentDifferentFiles(t *testing.T) {
 	}
 }
 
-func TestFilesAreDifferentMissingFile(t *testing.T) {
+func TestFilesAreDifferent_MissingFile(t *testing.T) {
 	tmp := t.TempDir()
 
 	fileA := filepath.Join(tmp, "a.txt")
@@ -108,7 +108,7 @@ func TestFilesAreDifferentMissingFile(t *testing.T) {
 	}
 }
 
-func TestFilesAreDifferentMissingFiles(t *testing.T) {
+func TestFilesAreDifferent_MissingFiles(t *testing.T) {
 	tmp := t.TempDir()
 	missingFile := filepath.Join(tmp, "does-not-exist.txt")
 
@@ -118,7 +118,7 @@ func TestFilesAreDifferentMissingFiles(t *testing.T) {
 	}
 }
 
-func TestFilesAreDifferentUnreadableFile(t *testing.T) {
+func TestFilesAreDifferent_UnreadableFile(t *testing.T) {
 	tmp := t.TempDir()
 	fileA := filepath.Join(tmp, "a.txt")
 	protectedFile := filepath.Join(tmp, "protected.txt")
