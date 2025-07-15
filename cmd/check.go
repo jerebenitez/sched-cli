@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -31,7 +32,12 @@ func checkImpl(cmd *cobra.Command, args []string) {
 	dir = strings.Trim(dir, "/")
 	src := rootCmd.PersistentFlags().Lookup("src").Value.String()
 	src = strings.Trim(src, "/")
-	origFiles := lib.ReadRecursiveDir(dir, "orig")
+	origFiles, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(dir, "orig")))
+
+	if err != nil {
+		log.Fatalf("ReadRecursiveDir error: %v", err)
+		return
+	}
 
 	for _, file := range origFiles {
 		srcFile := filepath.Join(src, file)
@@ -62,7 +68,12 @@ func checkImpl(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Println("Testing patches...")
-	patches := lib.ReadRecursiveDir(dir, "patches")
+	patches, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(dir, "patches")))
+
+	if err != nil {
+		log.Fatalf("ReadRecursiveDir error: %v", err)
+		return
+	}
 
 	for _, patch := range patches {
 		srcFile := filepath.Join(src, lib.TrimExtension(patch))

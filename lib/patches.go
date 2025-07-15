@@ -26,6 +26,7 @@ func ApplyPatch(sourcePath, patchPath string, isDryRun bool) (bool, error) {
 		dryRun = "--dry-run"
 	}
 
+	// TODO: test that passing an empty string as an argument doesn't break
 	diff := exec.Command(
 		"patch", dryRun, "-p1", "--strip=0", 
 		sourcePath, 

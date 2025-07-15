@@ -32,7 +32,12 @@ func runInstall(cmd *cobra.Command, args []string) {
 
 	fmt.Printf("Installing files to %s...\n", src)
 
-	files := lib.ReadRecursiveDir(dir, "src")
+	files, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(dir, "src")))
+
+	if err != nil {
+		log.Fatalf("ReadRecursiveDir error: %v", err)
+		return
+	}
 
 	for _, file := range files {
 		path := lib.GetPath(file)
@@ -51,7 +56,12 @@ func runInstall(cmd *cobra.Command, args []string) {
 	
 	fmt.Println("Applying patches...")
 
-	patches := lib.ReadRecursiveDir(dir, "patches")
+	patches, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(dir, "patches")))
+
+	if err != nil {
+		log.Fatalf("ReadRecursiveDir error: %v", err)
+		return
+	}
 
 	for _, patch := range patches {
 		result, err := lib.ApplyPatch(
