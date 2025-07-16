@@ -2,7 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
 
+	"github.com/jerebenitez/sched-cli/lib"
+	godiffpatch "github.com/sourcegraph/go-diff-patch"
 	"github.com/spf13/cobra"
 )
 
@@ -19,16 +25,57 @@ var generateDiffCmd = &cobra.Command{
 	},
 }
 
-func runGenerateDiff(path string) {
-	fmt.Printf("Generating diff for %s...\n", path)
+func runGenerateDiff(patchPath string) {
+	// TODO: Refactor this function
+	// TODO: Get path from --src
+	// TODO: Test function
+	fmt.Printf("Generating diff for %s...\n", patchPath)
 
-	// Crear carpetas de ser necesario
+	path, _ := filepath.Split(patchPath)
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		log.Fatalf("Error creating folders!. Quitting.\n")
+	}
 
-	// Checkear si es un repo de git
-	//		si no lo es, necesito tener orig para copiar ese archivo
-	//		si lo es, copiar el archivo de git
+	var originalContent []byte
 
-	// Generar el diff con la versión que haya guardado en orig/
+	if lib.IsGitRepo(path) {
+		cmd := exec.Command("git", "show", fmt.Sprintf("HEAD:%s", path))
+		cmd.Dir = path
+		out, err := cmd.Output()
+		if err != nil {
+			log.Fatalf("Error reading original from git: %v", err)
+			return
+		}
+		originalContent = out
+	} else {
+		originalPath := rootCmd.PersistentFlags().Lookup("original").Value.String()
+		if originalPath == "" {
+			log.Fatalf("Folder is not a git repository, need to provide path to original with --original.")
+			return
+		}
+
+		originalFullPath := filepath.Join(originalPath, path)
+		content, err := os.ReadFile(originalFullPath)
+		if err != nil {
+			log.Fatalf("Cannot read original file from %s: %v", originalFullPath, err)
+			return
+		}
+		originalContent = content
+	}
+
+	newContent, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("Cannot read current file: %v", err)
+		return
+	}
+
+	patch := godiffpatch.GeneratePatch(path, string(originalContent), string(newContent))
+	if err := os.WriteFile(patchPath, []byte(patch), 0644); err != nil {
+		log.Fatalf("Cannot write patch to %s: %v", patchPath, err)
+		return
+	}
+
+	fmt.Println("Diff generated successfully.")
 }
 
 func init() {
