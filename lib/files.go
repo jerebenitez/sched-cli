@@ -1,12 +1,12 @@
 package lib
 
 import (
-	"bytes"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 func FileExists(path string) (bool, error){
@@ -23,14 +23,6 @@ func FileExists(path string) (bool, error){
 }
 
 func FilesAreDifferent(pathA, pathB string) (bool, error) {
-	if aExists, err := FileExists(pathA); err != nil || !aExists {
-		return false, fmt.Errorf("file A missing or error: %w", err)
-	}
-
-	if bExists, err := FileExists(pathB); err != nil || !bExists {
-		return false, fmt.Errorf("file B missing or error: %w", err)
-	}
-
 	aData, err := os.ReadFile(pathA)
 	if err != nil {
 		return false, err
@@ -41,11 +33,12 @@ func FilesAreDifferent(pathA, pathB string) (bool, error) {
 		return false, err
 	}
 
-	if !bytes.Equal(aData, bData) {
-		return true, nil
-	}
+	diff := diffmatchpatch.New()
+	diffs := diff.DiffMain(string(aData), string(bData), false)
 
-	return false, nil
+	areDifferent := len(diffs) > 1 || diffs[0].Type != diffmatchpatch.DiffEqual
+
+	return areDifferent, nil
 }
 
 func TrimExtension(path string) string {

@@ -84,6 +84,7 @@ func TestFilesAreDifferent_DifferentFiles(t *testing.T) {
 	if err := os.WriteFile(fileB, []byte("different content"), 0644); err != nil {
 		t.Fatal(err)
 	}
+
 	different, err := FilesAreDifferent(fileA, fileB)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
