@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sergi/go-diff/diffmatchpatch"
+	godiffpatch "github.com/sourcegraph/go-diff-patch"
 )
 
 func FileExists(path string) (bool, error){
@@ -33,12 +33,9 @@ func FilesAreDifferent(pathA, pathB string) (bool, error) {
 		return false, err
 	}
 
-	diff := diffmatchpatch.New()
-	diffs := diff.DiffMain(string(aData), string(bData), false)
+	patches := godiffpatch.GeneratePatch("", string(aData), string(bData))
 
-	areDifferent := len(diffs) > 1 || diffs[0].Type != diffmatchpatch.DiffEqual
-
-	return areDifferent, nil
+	return patches != "", nil
 }
 
 func TrimExtension(path string) string {

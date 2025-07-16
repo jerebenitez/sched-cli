@@ -1,45 +1,51 @@
 package lib
 
 import (
+	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
+
+	"github.com/bluekeyes/go-gitdiff/gitdiff"
 )
 
 func ApplyPatch(sourcePath, patchPath string, isDryRun bool) (bool, error) {
-	if aExists, err := FileExists(sourcePath); err != nil || !aExists {
-		return false, fmt.Errorf("source file missing or error: %w", err)
-	}
-
-	if bExists, err := FileExists(patchPath); err != nil || !bExists {
-		return false, fmt.Errorf("patch missing or error: %w", err)
-	}
-
-	devnull, err := os.OpenFile(os.DevNull, os.O_WRONLY, 0)
+	patchFile, err := os.Open(patchPath)
 	if err != nil {
-		return false, fmt.Errorf("failed to open /dev/null: %v", err)
+		return false, fmt.Errorf("open patch file: %w", err)
 	}
-	defer devnull.Close()
+	defer patchFile.Close()
 
-	dryRun := ""
-	if isDryRun {
-		dryRun = "--dry-run"
+	patches, _, err := gitdiff.Parse(patchFile)
+	if err != nil {
+		return false, fmt.Errorf("parse patch file: %w", err)
 	}
 
-	// TODO: test that passing an empty string as an argument doesn't break
-	diff := exec.Command(
-		"patch", dryRun, "-p1", "--strip=0", 
-		sourcePath, 
-		patchPath,
-	)
-	// We only care about exit code
-	diff.Stdout = devnull
+	if len(patches) == 0 {
+		return false, fmt.Errorf("no files to patch")
+	}
 
-	if err := diff.Run(); err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok && exitError.ExitCode() == 1 {
+	for _, patch := range patches {
+		if patch.NewName == "/dev/null" || patch.NewName == "" {
+			continue
+		}
+
+		content, err := os.ReadFile(sourcePath)
+		if err != nil {
+			return false, fmt.Errorf("read target file: %w", err)
+		}
+
+		var out bytes.Buffer
+		err = gitdiff.Apply(&out, bytes.NewReader(content), patch)
+		if err != nil {
 			return false, nil
 		}
-		return false, err
+		
+		if !isDryRun {
+			if err := os.WriteFile(sourcePath, out.Bytes(), 0644); err != nil {
+				return false, fmt.Errorf("write patched file %s: %w", sourcePath, err)
+			}
+		}
+
 	}
 
 	return true, nil
