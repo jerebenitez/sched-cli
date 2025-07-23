@@ -54,23 +54,23 @@ to quickly create a Cobra application.`,
 }
 
 func runInstall(cfg installConfig) error {
-	cfg.Dir = strings.TrimRight(cfg.Dir, "/")
-	cfg.Src = strings.TrimRight(cfg.Src, "/")
-
+	fmt.Fprintf(cfg.Out, "Installing files to %s...\n", cfg.Src)
 	if err := installFiles(cfg); err != nil {
-		return fmt.Errorf("installing new files failed: %v", err)
+		return fmt.Errorf("installFiles: %v", err)
 	}
+	fmt.Fprintf(cfg.Out, "Files installed!\n")
 
+	fmt.Fprintf(cfg.Out, "Applying patches...\n")
 	if err := applyPatches(cfg); err != nil {
-		return fmt.Errorf("applying patches failed: %v", err)
+		return fmt.Errorf("applyPatches: %v", err)
 	}
+	fmt.Fprintf(cfg.Out, "Installation completed. You may now compile and install the kernel.")
 
 	fmt.Fprintf(cfg.Out, "Scheduler installed.")
 	return nil
 }
 
 func applyPatches(cfg installConfig) error {
-	fmt.Fprintf(cfg.Out, "Applying patches...\n")
 	patchesPath := filepath.Join(cfg.Dir, "patches")
 
 	patches, err := lib.ReadRecursiveDir(os.DirFS(patchesPath))
@@ -94,12 +94,10 @@ func applyPatches(cfg installConfig) error {
 		}
 	}
 
-	fmt.Fprintf(cfg.Out, "Installation completed. You may now compile and install the kernel.")
 	return nil
 }
 
 func installFiles(cfg installConfig) error {
-	fmt.Fprintf(cfg.Out, "Installing files to %s...\n", cfg.Src)
 	source := filepath.Join(cfg.Dir, "src")
 
 	files, err := lib.ReadRecursiveDir(os.DirFS(source))
@@ -121,7 +119,6 @@ func installFiles(cfg installConfig) error {
 		}
 	}
 
-	fmt.Fprintf(cfg.Out, "Files installed!\n")
 	return nil
 }
 
