@@ -32,7 +32,7 @@ var generateDiffCmd = &cobra.Command{
   - If not, the path to a backup must be provided through --original (-o).`,
   	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		original, err := cmd.Root().PersistentFlags().GetString("original")
+		original, err := cmd.Flags().GetString("original")
 		if err != nil {
 			log.Fatalf("could not read --original: %v", err)
 		}
@@ -49,7 +49,6 @@ var generateDiffCmd = &cobra.Command{
 
 		filePath := args[0]
 
-		fmt.Printf("Generating diff for %s...\n", filePath)
 		err = runGenerateDiff(generateConfig{
 			FilePath: filePath,
 			Original: original,
@@ -65,32 +64,33 @@ var generateDiffCmd = &cobra.Command{
 }
 
 func runGenerateDiff(cfg generateConfig) error {
+	fmt.Fprintf(cfg.Out, "Generating diff for %s...\n", cfg.FilePath)
 	path, _ := filepath.Split(cfg.FilePath)
-	fullPath := filepath.Join(cfg.Dir, path)
+	patchPath := filepath.Join(cfg.Dir, path)
 
-	err := os.MkdirAll(fullPath, os.ModePerm)
+	err := os.MkdirAll(patchPath, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
 	var originalContent []byte
-	if lib.IsGitRepo(cfg.Src) {
-		originalContent, err = getFromRepo(cfg.Src)	
+	if lib.IsGitRepo(path) {
+		originalContent, err = getFromRepo(cfg.FilePath)	
 	} else {
-		originalContent, err = getFromOriginal(path, cfg.Original)
+		originalContent, err = getFromOriginal(patchPath, cfg.Original)
 	}
 
 	if err != nil {
 		return err
 	}
 
-	newContent, err := os.ReadFile(path)
+	newContent, err := os.ReadFile(cfg.FilePath)
 	if err != nil {
 		return err
 	}
 
 	patch := godiffpatch.GeneratePatch(path, string(originalContent), string(newContent))
-	if err := os.WriteFile(fullPath, []byte(patch), 0644); err != nil {
+	if err := os.WriteFile(patchPath, []byte(patch), 0644); err != nil {
 		return err
 	}
 
