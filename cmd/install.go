@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
+	_ "strings"
 
 	"github.com/jerebenitez/sched-cli/lib"
 	"github.com/spf13/cobra"
@@ -35,12 +35,11 @@ to quickly create a Cobra application.`,
 			log.Fatalf("could not read --dir: %v", err)
 		}
 
-		src, err := cmd.Root().PersistentFlags().GetString("dir")
+		src, err := cmd.Root().PersistentFlags().GetString("src")
 		if err != nil {
 			log.Fatalf("could not read --src: %v", err)
 		}
 
-		fmt.Printf("Installing files to %s...\n", src)
 		err = runInstall(installConfig{
 			Src: src,
 			Dir: dir,
@@ -55,35 +54,42 @@ to quickly create a Cobra application.`,
 
 func runInstall(cfg installConfig) error {
 	fmt.Fprintf(cfg.Out, "Installing files to %s...\n", cfg.Src)
-	if err := installFiles(cfg); err != nil {
+
+	source := filepath.Join(cfg.Dir, "src")
+	files, err := lib.ReadRecursiveDir(os.DirFS(source))
+	if err != nil {
+		return fmt.Errorf("error while reading dir %s: %v", source, err)
+	}
+
+	if err := installFiles(cfg.Src, files); err != nil {
 		return fmt.Errorf("installFiles: %v", err)
 	}
+
 	fmt.Fprintf(cfg.Out, "Files installed!\n")
 
 	fmt.Fprintf(cfg.Out, "Applying patches...\n")
-	if err := applyPatches(cfg); err != nil {
+
+	patchesPath := filepath.Join(cfg.Dir, "patches")
+	patches, err := lib.ReadRecursiveDir(os.DirFS(patchesPath))
+	if err != nil {
+		return fmt.Errorf("readRecursiveDir error: %v", err)
+	}
+
+	if err := applyPatches(cfg.Src, cfg.Dir, patches); err != nil {
 		return fmt.Errorf("applyPatches: %v", err)
 	}
+
 	fmt.Fprintf(cfg.Out, "Installation completed. You may now compile and install the kernel.")
 
 	fmt.Fprintf(cfg.Out, "Scheduler installed.")
 	return nil
 }
 
-func applyPatches(cfg installConfig) error {
-	patchesPath := filepath.Join(cfg.Dir, "patches")
-
-	patches, err := lib.ReadRecursiveDir(os.DirFS(patchesPath))
-	if err != nil {
-		return fmt.Errorf("readRecursiveDir error: %v", err)
-	}
-
+func applyPatches(src, dir string, patches []string) error {
 	for _, patch := range patches {
-		result, err := lib.ApplyPatch(
-			filepath.Join(cfg.Src, lib.TrimExtension(patch)),
-			filepath.Join(cfg.Dir, patch),
-			true,
-		)
+		sourcePath := filepath.Join(src, lib.TrimExtension(patch))
+		patchPath := filepath.Join(dir, patch)
+		result, err := lib.ApplyPatch(sourcePath, patchPath, true)
 		if err != nil {
 			return err
 		} else if !result {
@@ -97,23 +103,17 @@ func applyPatches(cfg installConfig) error {
 	return nil
 }
 
-func installFiles(cfg installConfig) error {
-	source := filepath.Join(cfg.Dir, "src")
-
-	files, err := lib.ReadRecursiveDir(os.DirFS(source))
-	if err != nil {
-		return fmt.Errorf("error while reading dir %s: %v", source, err)
-	}
-
+func installFiles(pathToSrc string, files []string) error {
 	for _, file := range files {
-		path, _ := filepath.Split(file)
-		target := filepath.Join(cfg.Src, path)
+		path, f := filepath.Split(file)
+		target := filepath.Join(pathToSrc, path)
 		if err := os.MkdirAll(target, os.ModePerm); err != nil {
 			return fmt.Errorf("error creating folder %s", target)
 		}
 
 		// TODO: Test that this behaves nicely when compiling the kernel
-		err := os.Link(filepath.Join(source, file), target)
+		filePath := filepath.Join(target, f)
+		err := os.Link(filePath, target)
 		if err != nil {
 			return fmt.Errorf("error copying file %s", file)
 		}
