@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/jerebenitez/sched-cli/lib"
 
@@ -38,7 +37,7 @@ to quickly create a Cobra application.`,
 			log.Fatalf("could not read --dir: %v", err)
 		}
 
-		src, err := cmd.Root().PersistentFlags().GetString("dir")
+		src, err := cmd.Root().PersistentFlags().GetString("src")
 		if err != nil {
 			log.Fatalf("could not read --src: %v", err)
 		}
@@ -50,17 +49,14 @@ to quickly create a Cobra application.`,
 		})
 
 		if err != nil {
-			log.Fatalf("check failed: %v", err)
+			log.Fatal(err)
 		}
 	},
 }
 
 func runCheck(cfg checkConfig) error {
-	cfg.Dir = strings.TrimRight(cfg.Dir, "/")
-	cfg.Src = strings.TrimRight(cfg.Src, "/")
-
-	if err := checkOriginalFiles(cfg); err != nil {
-		return fmt.Errorf("original files check failed: %w", err)
+	if err := checkFiles(cfg); err != nil {
+		return err
 	}
 
 	if err := checkPatches(cfg); err != nil {
@@ -72,7 +68,7 @@ func runCheck(cfg checkConfig) error {
 	return nil
 }
 
-func checkOriginalFiles(cfg checkConfig) error {
+func checkFiles(cfg checkConfig) error {
 	origFiles, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(cfg.Dir, "orig")))
 	if err != nil {
 		return err
@@ -97,9 +93,9 @@ func checkOriginalFiles(cfg checkConfig) error {
 			}
 
 			if diff {
-				fmt.Fprintf(cfg.Out, " [CHANGED]")
+				fmt.Fprintf(cfg.Out, " [CHANGED]\n")
 			} else {
-				fmt.Fprintf(cfg.Out, " [NOT CHANGED]")
+				fmt.Fprintf(cfg.Out, " [NOT CHANGED]\n")
 			}
 		} else {
 			fmt.Fprintf(cfg.Out, "\tERROR: %s does not exist.\n", file)
@@ -115,7 +111,7 @@ func checkOriginalFiles(cfg checkConfig) error {
 }
 
 func checkPatches(cfg checkConfig) error {
-	fmt.Fprintf(cfg.Out, "Testing patches...")
+	fmt.Fprintf(cfg.Out, "Testing patches.\n")
 
 	patches, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(cfg.Dir, "patches")))
 	if err != nil {
