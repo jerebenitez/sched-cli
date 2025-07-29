@@ -2,6 +2,7 @@ package lib
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,4 +42,23 @@ func FilesAreDifferent(pathA, pathB string) (bool, error) {
 func TrimExtension(path string) string {
 	ext := filepath.Ext(path)
 	return strings.TrimSuffix(path, ext)
+}
+
+func InstallFiles(pathToSrc string, files []string) error {
+	for _, file := range files {
+		path, f := filepath.Split(file)
+		target := filepath.Join(pathToSrc, path)
+		if err := os.MkdirAll(target, os.ModePerm); err != nil {
+			return fmt.Errorf("error creating folder %s", target)
+		}
+
+		// TODO: Test that this behaves nicely when compiling the kernel
+		filePath := filepath.Join(target, f)
+		err := os.Link(filePath, target)
+		if err != nil {
+			return fmt.Errorf("error copying file %s", file)
+		}
+	}
+
+	return nil
 }

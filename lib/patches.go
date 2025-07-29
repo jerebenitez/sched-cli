@@ -2,8 +2,10 @@ package lib
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 func ApplyPatch(sourcePath, patchPath string, isDryRun bool) (bool, error) {
@@ -31,4 +33,22 @@ func ApplyPatch(sourcePath, patchPath string, isDryRun bool) (bool, error) {
 	} else {
 		return false, nil
 	}
+}
+
+func ApplyPatches(src, dir string, patches []string) error {
+	for _, patch := range patches {
+		sourcePath := filepath.Join(src, TrimExtension(patch))
+		patchPath := filepath.Join(dir, patch)
+		result, err := ApplyPatch(sourcePath, patchPath, true)
+		if err != nil {
+			return err
+		} else if !result {
+			return fmt.Errorf(
+				"unable to patch %s: file not compatible with patch",
+				TrimExtension(patch),
+			)
+		}
+	}
+
+	return nil
 }

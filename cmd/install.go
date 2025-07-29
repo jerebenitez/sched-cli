@@ -61,7 +61,7 @@ func runInstall(cfg installConfig) error {
 		return fmt.Errorf("error while reading dir %s: %v", source, err)
 	}
 
-	if err := installFiles(cfg.Src, files); err != nil {
+	if err := lib.InstallFiles(cfg.Src, files); err != nil {
 		return fmt.Errorf("installFiles: %v", err)
 	}
 
@@ -75,7 +75,7 @@ func runInstall(cfg installConfig) error {
 		return fmt.Errorf("readRecursiveDir error: %v", err)
 	}
 
-	if err := applyPatches(cfg.Src, cfg.Dir, patches); err != nil {
+	if err := lib.ApplyPatches(cfg.Src, cfg.Dir, patches); err != nil {
 		return fmt.Errorf("applyPatches: %v", err)
 	}
 
@@ -85,42 +85,6 @@ func runInstall(cfg installConfig) error {
 	return nil
 }
 
-func applyPatches(src, dir string, patches []string) error {
-	for _, patch := range patches {
-		sourcePath := filepath.Join(src, lib.TrimExtension(patch))
-		patchPath := filepath.Join(dir, patch)
-		result, err := lib.ApplyPatch(sourcePath, patchPath, true)
-		if err != nil {
-			return err
-		} else if !result {
-			return fmt.Errorf(
-				"unable to patch %s: file not compatible with patch",
-				lib.TrimExtension(patch),
-			)
-		}
-	}
-
-	return nil
-}
-
-func installFiles(pathToSrc string, files []string) error {
-	for _, file := range files {
-		path, f := filepath.Split(file)
-		target := filepath.Join(pathToSrc, path)
-		if err := os.MkdirAll(target, os.ModePerm); err != nil {
-			return fmt.Errorf("error creating folder %s", target)
-		}
-
-		// TODO: Test that this behaves nicely when compiling the kernel
-		filePath := filepath.Join(target, f)
-		err := os.Link(filePath, target)
-		if err != nil {
-			return fmt.Errorf("error copying file %s", file)
-		}
-	}
-
-	return nil
-}
 
 func init() {
 	rootCmd.AddCommand(installCmd)

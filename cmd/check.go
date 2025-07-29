@@ -68,6 +68,7 @@ func runCheck(cfg checkConfig) error {
 	return nil
 }
 
+// TODO: Change args and move to lib
 func checkFiles(cfg checkConfig) error {
 	origFiles, err := lib.ReadRecursiveDir(os.DirFS(filepath.Join(cfg.Dir, "orig")))
 	if err != nil {
@@ -110,6 +111,7 @@ func checkFiles(cfg checkConfig) error {
 	return nil
 }
 
+// TODO: Change args and move to lib
 func checkPatches(cfg checkConfig) error {
 	fmt.Fprintf(cfg.Out, "Testing patches.\n")
 

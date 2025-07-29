@@ -98,6 +98,7 @@ func runGenerateDiff(cfg generateConfig) error {
 	return nil
 }
 
+// TODO: Change args and move to lib
 func getFromRepo(path string) ([]byte, error) {
 	cmd := exec.Command("git", "show", fmt.Sprintf("HEAD:%s", path))
 	cmd.Dir = path
@@ -110,6 +111,7 @@ func getFromRepo(path string) ([]byte, error) {
 	return out, nil
 }
 
+// TODO: Change args and move to lib
 func getFromOriginal(path, original string) ([]byte, error) {
 	if original == "" {
 		return []byte{}, fmt.Errorf("folder is not a git repository, need to provide path to original with --original")
