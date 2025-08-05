@@ -6,10 +6,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	_ "strings"
 
 	"github.com/jerebenitez/sched-cli/lib"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type installConfig struct {
@@ -30,17 +30,10 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		dir, err := cmd.Root().PersistentFlags().GetString("dir")
-		if err != nil {
-			log.Fatalf("could not read --dir: %v", err)
-		}
+		dir := viper.GetString("sched")
+		src := viper.GetString("kernel")
 
-		src, err := cmd.Root().PersistentFlags().GetString("src")
-		if err != nil {
-			log.Fatalf("could not read --src: %v", err)
-		}
-
-		err = runInstall(installConfig{
+		err := runInstall(installConfig{
 			Src: src,
 			Dir: dir,
 			Out: os.Stdout,
@@ -58,11 +51,11 @@ func runInstall(cfg installConfig) error {
 	source := filepath.Join(cfg.Dir, "src")
 	files, err := lib.ReadRecursiveDir(os.DirFS(source))
 	if err != nil {
-		return fmt.Errorf("error while reading dir %s: %v", source, err)
+		return err
 	}
 
 	if err := lib.InstallFiles(cfg.Src, files); err != nil {
-		return fmt.Errorf("installFiles: %v", err)
+		return err
 	}
 
 	fmt.Fprintf(cfg.Out, "Files installed!\n")
@@ -72,11 +65,11 @@ func runInstall(cfg installConfig) error {
 	patchesPath := filepath.Join(cfg.Dir, "patches")
 	patches, err := lib.ReadRecursiveDir(os.DirFS(patchesPath))
 	if err != nil {
-		return fmt.Errorf("readRecursiveDir error: %v", err)
+		return err
 	}
 
 	if err := lib.ApplyPatches(cfg.Src, cfg.Dir, patches); err != nil {
-		return fmt.Errorf("applyPatches: %v", err)
+		return err
 	}
 
 	fmt.Fprintf(cfg.Out, "Installation completed. You may now compile and install the kernel.")

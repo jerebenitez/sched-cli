@@ -76,7 +76,7 @@ func checkFiles(cfg checkConfig) error {
 
 		exists, err := lib.FileExists(srcFile)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		if exists {
