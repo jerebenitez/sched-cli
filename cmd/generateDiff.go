@@ -30,7 +30,8 @@ var generateDiffCmd = &cobra.Command{
 	Short: "Generate a patch for a modified file in the source tree:",
 	Long: `Generate a patch for a modified file in the source tree:
   - If the source tree is a git repo, the original version is taken from HEAD.
-  - If not, the path to a backup must be provided through --original (-o).`,
+  - If not, the path to a backup must be provided through --original (-o).
+This command also copies original files over to orig/`,
   	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		original, err := cmd.Flags().GetString("original")
