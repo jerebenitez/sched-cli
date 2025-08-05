@@ -10,6 +10,19 @@ import (
 	godiffpatch "github.com/sourcegraph/go-diff-patch"
 )
 
+func Touch(path string) error {
+	f, err := os.OpenFile(path, os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	if err := f.Close(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func FileExists(path string) (bool, error){
 	_, err := os.Stat(path)
 	if err == nil {
