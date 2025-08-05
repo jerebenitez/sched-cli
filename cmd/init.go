@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+	"os/exec"
+
+	"github.com/jerebenitez/sched-cli/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -25,6 +29,13 @@ and usage of using your command. For example:`,
 				cobra.CheckErr(err)
 			}
 		})
+
+		if gitInit && !lib.IsGitRepo(kernel) {
+			cmd := exec.Command("git", "init", kernel)
+			output, err := cmd.Output()
+			cobra.CheckErr(err)
+			fmt.Println(string(output))
+		}	
 	},
 }
 
@@ -39,8 +50,5 @@ func init() {
 	err = viper.BindPFlag("sched", initCmd.PersistentFlags().Lookup("sched"))
 	cobra.CheckErr(err)
 
-	initCmd.PersistentFlags().BoolVarP(&gitInit, "git-init", "g", true, "Init a git repo under kernel source tree (recommended).")
-	err = viper.BindPFlag("git-init", initCmd.PersistentFlags().Lookup("git-init"))
-	cobra.CheckErr(err)
-
+	initCmd.Flags().BoolVarP(&gitInit, "git-init", "g", true, "Init a git repo under kernel source tree (recommended).")
 }

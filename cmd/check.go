@@ -10,6 +10,7 @@ import (
 	"github.com/jerebenitez/sched-cli/lib"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type checkConfig struct {
@@ -32,17 +33,10 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Running checks on patches and file existence.")
 
-		dir, err := cmd.Root().PersistentFlags().GetString("dir")
-		if err != nil {
-			log.Fatalf("could not read --dir: %v", err)
-		}
+		dir := viper.GetString("sched")
+		src := viper.GetString("kernel")
 
-		src, err := cmd.Root().PersistentFlags().GetString("src")
-		if err != nil {
-			log.Fatalf("could not read --src: %v", err)
-		}
-
-		err = runCheck(checkConfig{
+		err := runCheck(checkConfig{
 			Dir: dir,
 			Src: src,
 			Out: os.Stdout,
