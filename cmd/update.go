@@ -2,9 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
+	"github.com/jerebenitez/sched-cli/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -73,26 +77,99 @@ This opens "meld" with:
 	Run: func(cmd *cobra.Command, args []string) {
 		tool := viper.GetString("tool")
 		toolFormat := viper.GetString("toolFormat")
-		formated := fmt.Sprintf(toolFormat, "file1", "file2", "file3")
+		src := viper.GetString("kernel")
+		dir := viper.GetString("sched")
 
-		// 1. Get all files
-		// filePath := args[0]
+		filePath := args[0]
+		origFile := filepath.Join(dir, "orig", filePath)
+		patchFile := filepath.Join(dir, "patches", filePath+".patch")
+		upstreamFile := filepath.Join(src, filePath)
+
+		fmt.Printf("%s %s %s %s\n", filePath, origFile, patchFile, upstreamFile)
+		if e, err := filesExist(origFile, patchFile, upstreamFile); err != nil || !e {
+			log.Fatalf("Some files didn't exist, unable to update.")
+		} 
 
 		// 2. Build temp reconstruction
+		reconstructed, err := os.CreateTemp("", "reconstructed-*")
+		cobra.CheckErr(err)
+		defer os.Remove(reconstructed.Name())
+		
+		err = lib.CopyFile(origFile, reconstructed.Name())
+		if err != nil {
+			cobra.CheckErr(err)
+		}
+
+		if _, err := lib.ApplyPatch(reconstructed.Name(), patchFile, false); err != nil {
+			cobra.CheckErr(err)
+		}
+
+		merged, err := os.CreateTemp("", "merged-*")
+		cobra.CheckErr(err)
+		defer os.Remove(merged.Name())
 
 		// 3. Try automatic merge
+		manualMerge := false
+		diff3Cmd := exec.Command("diff3", "-m", reconstructed.Name(), origFile, upstreamFile)
+		out, err :=diff3Cmd.Output()
+		
+		if err != nil {
+			manualMerge = true
+			fmt.Printf("Conflict in %s... launching manual merge\n", filePath)
+		} else {
+			err = os.WriteFile(merged.Name(), out, 0644)
+			cobra.CheckErr(err)
+		}
 
 		// 4. If it failed, reconstruct manually
+		if manualMerge {
+			formatArgs := fmt.Sprintf(toolFormat, upstreamFile, origFile, reconstructed.Name())
+			args := strings.Fields(formatArgs)
+			mergeCmd := exec.Command(tool, args...)
+			mergeCmd.Stdout = os.Stdout
+			mergeCmd.Stderr = os.Stderr
+			mergeCmd.Stdin = os.Stdin
+			if err := mergeCmd.Run(); err != nil {
+				fmt.Printf("Manual merge failed: %v\n", err)
+				return
+			}
+
+			// Assume user saved resolved file in reconstructed
+			err := lib.CopyFile(reconstructed.Name(), merged.Name())
+			cobra.CheckErr(err)
+		}
 
 		// 5. Update original
+		err = lib.CopyFile(upstreamFile, origFile)
+		cobra.CheckErr(err)
 
 		// 6. Regenerate patch
+		if err := os.MkdirAll(filepath.Dir(patchFile), os.ModePerm); err != nil {
+			cobra.CheckErr(err)
+		}
 
-		// 7. Delete temp file
+		diffCmd := exec.Command("diff", "-u", origFile, merged.Name())
+		diffOut, err := diffCmd.Output()
+		if err == nil || len(diffOut) > 0 {
+			err := os.WriteFile(patchFile, diffOut, 0644)
+			cobra.CheckErr(err)
+		}
 
-		fmt.Printf("%s " + formated, tool)
-		fmt.Println()
+		fmt.Printf("Updated patch and orig for %s\n", filePath)
 	},
+}
+
+func filesExist(files ...string) (bool, error) {
+	exist := true
+	for _, f := range files {
+		exists, err := lib.FileExists(f)
+		if err != nil {
+			return false, err
+		}
+		exist = exist && exists
+	}
+
+	return exist, nil
 }
 
 func init() {
