@@ -75,3 +75,17 @@ func InstallFiles(pathToSrc string, files []string) error {
 
 	return nil
 }
+
+func CopyFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(dst, data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
