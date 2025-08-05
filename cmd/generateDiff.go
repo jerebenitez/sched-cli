@@ -11,6 +11,7 @@ import (
 	"github.com/jerebenitez/sched-cli/lib"
 	godiffpatch "github.com/sourcegraph/go-diff-patch"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type generateConfig struct {
@@ -37,15 +38,8 @@ var generateDiffCmd = &cobra.Command{
 			log.Fatalf("could not read --original: %v", err)
 		}
 
-		dir, err := cmd.Root().PersistentFlags().GetString("dir")
-		if err != nil {
-			log.Fatalf("could not read --dir: %v", err)
-		}
-
-		src, err := cmd.Root().PersistentFlags().GetString("src")
-		if err != nil {
-			log.Fatalf("could not read --src: %v", err)
-		}
+		dir := viper.GetString("sched")
+		src := viper.GetString("kernel")
 
 		filePath := args[0]
 
