@@ -55,9 +55,9 @@ func init() {
 	err = viper.BindPFlag("scheduler", initCmd.PersistentFlags().Lookup("scheduler"))
 	cobra.CheckErr(err)
 
-	initCmd.PersistentFlags().StringVarP(&branch, "branch", "b", "main", "Branch of scheduler to work under.")
-	err = viper.BindPFlag("branch", initCmd.PersistentFlags().Lookup("branch"))
-	cobra.CheckErr(err)
+	// initCmd.PersistentFlags().StringVarP(&branch, "branch", "b", "main", "Branch of scheduler to work under.")
+	// err = viper.BindPFlag("branch", initCmd.PersistentFlags().Lookup("branch"))
+	// cobra.CheckErr(err)
 
 	initCmd.Flags().BoolVarP(&gitInit, "git-init", "g", true, "Init a git repo under kernel source tree (recommended).")
 }
