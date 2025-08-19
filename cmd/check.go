@@ -28,7 +28,7 @@ var checkCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Running checks on patches and file existence.")
 
-		dir := viper.GetString("sched")
+		dir := viper.GetString("scheduler")
 		src := viper.GetString("kernel")
 
 		err := runCheck(checkConfig{
@@ -75,7 +75,7 @@ func checkFiles(cfg checkConfig) error {
 		}
 
 		if exists {
-			fmt.Fprintf(cfg.Out, "\tChecking %s...", file)
+			fmt.Fprintf(cfg.Out, "Checking %s...", file)
 
 			diff, err := lib.FilesAreDifferent(origFile, srcFile)
 			if err != nil {
@@ -83,12 +83,12 @@ func checkFiles(cfg checkConfig) error {
 			}
 
 			if diff {
-				fmt.Fprintf(cfg.Out, " [CHANGED]\n")
+				fmt.Fprintf(cfg.Out, " \033[33m[CHANGED]\033[0m\n")
 			} else {
-				fmt.Fprintf(cfg.Out, " [NOT CHANGED]\n")
+				fmt.Fprintf(cfg.Out, " \033[32m[NOT CHANGED]\033[0m\n")
 			}
 		} else {
-			fmt.Fprintf(cfg.Out, "\tERROR: %s does not exist.\n", file)
+			fmt.Fprintf(cfg.Out, "\033[91mERROR: %s does not exist.\033[0m\n", file)
 			error = true
 		}
 	}
@@ -125,12 +125,12 @@ func checkPatches(cfg checkConfig) error {
 			}
 
 			if canApply {
-				fmt.Fprintf(cfg.Out, "\tPatch %s can be applied.\n", patch)
+				fmt.Fprintf(cfg.Out, "\033[32mPatch %s can be applied.\033[0m\n", patch)
 			} else {
-				fmt.Fprintf(cfg.Out, "\tERROR: Patch %s CAN'T be applied.\n", patch)
+				fmt.Fprintf(cfg.Out, "\033[91mERROR: Patch %s CAN'T be applied.\033[0m\n", patch)
 			}
 		} else {
-			fmt.Fprintf(cfg.Out, "\tERROR: %s not applicable to source tree.\n", patch)
+			fmt.Fprintf(cfg.Out, "\033[91mERROR: %s not applicable to source tree.\033[0m\n", patch)
 		}
 	}
 
