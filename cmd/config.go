@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/jerebenitez/sched-cli/lib"
 	"github.com/spf13/cobra"
@@ -23,7 +24,12 @@ var initCmd = &cobra.Command{
 		// If any flag was provided, write config
 		cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 			if f.Changed {
-				// TODO: Resolve paths before writing
+				if f.Name == "kernel" || f.Name == "scheduler" {
+					path, err := filepath.Abs(f.Value.String())
+					cobra.CheckErr(err)
+					err = f.Value.Set(path)
+					cobra.CheckErr(err)
+				}
 				err := viper.WriteConfig()
 				cobra.CheckErr(err)
 			}
