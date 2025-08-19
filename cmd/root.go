@@ -16,6 +16,27 @@ var rootCmd = &cobra.Command{
 	Use:   "sched-cli",
 	Short: "CLI app to manage the development of Project Scheduler.",
 	Long: ``,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Create config folder if it doesn't exists
+		if exists, err := lib.FileExists(cfgFile); !exists && err == nil {
+			path, file := filepath.Split(cfgFile)
+			path, err = lib.ResolvePath(path)
+			cobra.CheckErr(err)
+
+			err = os.MkdirAll(path, os.ModePerm)
+			cobra.CheckErr(err)
+
+			configPath := filepath.Join(path, file)
+			err = lib.Touch(configPath)
+			cobra.CheckErr(err)
+		}
+
+		path, err := lib.ResolvePath(cfgFile)
+		cobra.CheckErr(err)
+		viper.SetConfigFile(path)
+		err = viper.ReadInConfig()
+		cobra.CheckErr(err)
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -29,44 +50,4 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "~/.config/sched/config.yaml", "Config file")
-	// Create config folder if it doesn't exists
-	configPath, err := rootCmd.PersistentFlags().GetString("config")
-	cobra.CheckErr(err)
-
-	path, file := filepath.Split(configPath)
-	path, err = lib.ResolvePath(path)
-	cobra.CheckErr(err)
-
-	err = os.MkdirAll(path, os.ModePerm)
-	cobra.CheckErr(err)
-
-	configPath = filepath.Join(path, file)
-	err = lib.Touch(configPath)
-	cobra.CheckErr(err)
-
-	initConfigViper()
 }
-
-func initConfigViper() {
-	if cfgFile != "" {
-		path, err := lib.ResolvePath(cfgFile)
-		cobra.CheckErr(err)
-		viper.SetConfigFile(path)
-	} else {
-		configPath, err := rootCmd.PersistentFlags().GetString("config")
-		cobra.CheckErr(err)
-
-		configPath, err = lib.ResolvePath(configPath)
-		cobra.CheckErr(err)
-		path, _ := filepath.Split(configPath)
-
-		viper.AddConfigPath(path)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName("config")
-	}
-
-	err := viper.ReadInConfig()
-	cobra.CheckErr(err)
-}
-
-

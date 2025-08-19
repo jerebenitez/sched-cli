@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/jerebenitez/sched-cli/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
 var (
-	kernel, sched, branch string
+	kernel, sched string
 	gitInit bool
 )
 
@@ -36,10 +35,8 @@ var initCmd = &cobra.Command{
 		})
 
 		// Show current config
-		if !lib.HasProvidedFlags(cmd) {
-			for k, v := range viper.AllSettings() {
-				fmt.Printf("\033[1m%s\033[0m: %v\n", k, v)
-			}
+		for k, v := range viper.AllSettings() {
+			fmt.Printf("\033[1m%s\033[0m: %v\n", k, v)
 		}
 	},
 }
