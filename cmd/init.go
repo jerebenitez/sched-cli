@@ -25,6 +25,7 @@ and usage of using your command. For example:`,
 		// If any flag was provided, write config
 		cmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 			if f.Changed {
+				// TODO: Resolve paths before writing
 				err := viper.WriteConfig()
 				cobra.CheckErr(err)
 			}
