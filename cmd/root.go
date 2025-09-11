@@ -13,9 +13,8 @@ var cfgFile string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "sched-cli",
-	Short: "CLI app to manage the development of Project Scheduler.",
-	Long: ``,
+	Use:   "oot",
+	Short: "CLI app to manage out-of-tree development.",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Create config folder if it doesn't exists
 		if exists, err := lib.FileExists(cfgFile); !exists && err == nil {
@@ -39,8 +38,6 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
