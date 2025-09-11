@@ -46,5 +46,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "~/.config/sched/config.yaml", "Config file")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "~/.config/oot/config.yaml", "Config file")
 }

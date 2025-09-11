@@ -44,5 +44,5 @@ func ResolvePath(dir string) (string, error) {
 		path = dir
 	}
 
-	return path, nil
+	return filepath.Abs(path)
 }
