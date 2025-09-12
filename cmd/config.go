@@ -24,7 +24,7 @@ locally so that other commands know where to find and operate on your repos
 without needing to specify the path each time.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		noFlags := true
-		cmd.Flags().VisitAll(func (f *pflag.Flag) {
+		cmd.Flags().VisitAll(func(f *pflag.Flag) {
 			if f.Changed {
 				path, err := lib.ResolvePath(f.Value.String())
 				cobra.CheckErr(err)
@@ -36,6 +36,7 @@ without needing to specify the path each time.`,
 
 		if noFlags {
 			// Show current config
+			fmt.Println("Current configuration")
 			for k, v := range viper.AllSettings() {
 				fmt.Printf("\033[1m%s\033[0m: %v\n", k, v)
 			}
