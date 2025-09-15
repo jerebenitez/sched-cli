@@ -50,10 +50,10 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 
 	configCmd.Flags().StringVarP(&basePath, "base", "b", "", "Path to base repo, where you'll make modifications.")
-	err := viper.BindPFlag("base", configCmd.Flags().Lookup("base"))
+	err := viper.BindPFlag("basePath", configCmd.Flags().Lookup("base"))
 	cobra.CheckErr(err)
 
 	configCmd.Flags().StringVarP(&featuresPath, "features", "f", "", "Path to repo where you'll store the patches.")
-	err = viper.BindPFlag("features", configCmd.Flags().Lookup("features"))
+	err = viper.BindPFlag("featuresPath", configCmd.Flags().Lookup("features"))
 	cobra.CheckErr(err)
 }
